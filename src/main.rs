@@ -12,11 +12,11 @@ use rand::Rng;
 // static WINDOW_WIDTH: i32 = 10;
 static CORNER_PADDING: i32 = 5;
 
-struct Target {
+struct Target<'a> {
     x: i32,
     y: i32,
     remaining: i32,
-    word: String
+    word: &'a str
 }
 
 fn main()
@@ -39,10 +39,10 @@ fn main()
         let mut target = Target {
             x: rng.gen_range(CORNER_PADDING, max_x - CORNER_PADDING),
             y: rng.gen_range(CORNER_PADDING, max_y - CORNER_PADDING),
-            word: String::from(choice),
+            word: choice,
             remaining: choice.len() as i32
         };
-        spawn_word(target.x, target.y, target.word.clone().as_str());
+        spawn_word(target.x, target.y, target.word);
         targets.push(target);
     }));
 
