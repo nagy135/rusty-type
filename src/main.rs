@@ -1,36 +1,39 @@
 extern crate termion;
 
-use termion::event::*;
-use termion::cursor;
-use termion::input::{TermRead, MouseTerminal};
 use termion::raw::IntoRawMode;
-use std::io::{self, Write};
+use termion::async_stdin;
+use std::io::{Read, Write, stdout};
+use std::thread;
+use std::time::Duration;
 
 fn main() {
-    let stdin = io::stdin();
-    let mut stdout = MouseTerminal::from(io::stdout().into_raw_mode().unwrap());
+    let stdout = stdout();
+    let mut stdout = stdout.lock().into_raw_mode().unwrap();
+    let mut stdin = async_stdin().bytes();
 
-    writeln!(stdout,
-             "{}{}q to exit. Type stuff, use alt, click around...",
-             termion::clear::All,
-             termion::cursor::Goto(1, 1))
-        .unwrap();
+    write!(stdout,
+           "{}{}",
+           termion::clear::All,
+           termion::cursor::Goto(1, 1))
+            .unwrap();
 
-    for c in stdin.events() {
-        let evt = c.unwrap();
-        match evt {
-            Event::Key(Key::Char('q')) => break,
-            Event::Mouse(me) => {
-                match me {
-                    MouseEvent::Press(_, a, b) |
-                    MouseEvent::Release(a, b) |
-                    MouseEvent::Hold(a, b) => {
-                        write!(stdout, "{}", cursor::Goto(a, b)).unwrap();
-                    }
-                }
-            }
-            _ => {}
+    loop {
+        write!(stdout, "{}", termion::clear::CurrentLine).unwrap();
+
+        let b = stdin.next();
+        write!(stdout, "\r{:?}    <- This demonstrates the async read input char. Between each update a 100 ms. is waited, simply to demonstrate the async fashion. \n\r", b).unwrap();
+        if let Some(Ok(b'q')) = b {
+            break;
         }
+
+        stdout.flush().unwrap();
+
+        thread::sleep(Duration::from_millis(50));
+        stdout.write_all(b"# ").unwrap();
+        stdout.flush().unwrap();
+        thread::sleep(Duration::from_millis(50));
+        stdout.write_all(b"\r #").unwrap();
+        write!(stdout, "{}", termion::cursor::Goto(1, 1)).unwrap();
         stdout.flush().unwrap();
     }
 }
