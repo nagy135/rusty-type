@@ -70,25 +70,23 @@ fn main() {
             }
             let choice = rng.gen_range(0, dictionary.len());
 
-            let mut wrong_place: bool = true;
             let mut x: u16 = rng.gen_range(0, termina_width - dictionary[choice].len() as u16);
             let mut y: u16 = rng.gen_range(0, termina_height);
+
+            let mut wrong_place: bool = true;
             while wrong_place {
                 wrong_place = false;
                 for target in targets.iter() {
-                    let word_span: i16 = target.x as i16 + target.length as i16;
-                    let new_word_span: i16 = dictionary[choice].len() as i16 - WORD_SPACING;
-                    // if word_span < new_word_span {
-                    //     wrong_place = true;
-                    // }
                     if y == target.y {
-                        if x >= target.x && x as i16 <= word_span - new_word_span {
-                            wrong_place = true;
-                        }
+                        if x <= target.x + target.length &&
+                            (x as i16 + dictionary[choice].len() as i16) > (target.x as i16 - WORD_SPACING) {
+                                wrong_place = true;
+                                break;
+                            }
                     }
                 }
                 if wrong_place {
-                    x = rng.gen_range(0, termina_width);
+                    x = rng.gen_range(0, termina_width - dictionary[choice].len() as u16);
                     y = rng.gen_range(0, termina_height);
                 }
 
