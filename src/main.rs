@@ -11,9 +11,12 @@ use std::thread;
 use std::time::Duration;
 
 use rand::Rng;
-use rand::rngs::ThreadRng;
 
 use std::time::{Instant};
+
+static INIT_SPAWNING_SPEED: u128 = 1000;
+static SPAWNING_SPEED_STEP: u128 = 50;
+static SPAWNING_SPEED_MINIMUM: u128 = 300;
 
 fn main() {
     let stdout = stdout();
@@ -23,7 +26,7 @@ fn main() {
     let dictionary = data::dictionary();
     let mut rng = rand::thread_rng();
 
-    write!(stdout, "{}", cursor::Hide);
+    write!(stdout, "{}", cursor::Hide).unwrap();
 
     write!(stdout,
            "{}{}",
@@ -32,12 +35,17 @@ fn main() {
             .unwrap();
 
     let mut start = Instant::now();
+    let mut termina_width: u16;
+    let mut termina_height: u16;
+    let mut speed: u128 = INIT_SPAWNING_SPEED;
     loop {
         let elapsed = start.elapsed();
-        if elapsed.as_secs() >= 1 {
+        if elapsed.as_millis() >= speed {
             start = Instant::now();
-            let mut termina_width: u16;
-            let mut termina_height: u16;
+            speed -= SPAWNING_SPEED_STEP;
+            if speed <= SPAWNING_SPEED_MINIMUM {
+                speed = SPAWNING_SPEED_MINIMUM;
+            }
             match terminal_size() {
                 Ok(sizes) => {
                     termina_width = sizes.0 as u16;
@@ -59,7 +67,7 @@ fn main() {
         let b = stdin.next();
         // write!(stdout, "\r{:?}    <- This demonstrates the async read input char. Between each update a 100 ms. is waited, simply to demonstrate the async fashion. \n\r", b).unwrap();
         if let Some(Ok(b'q')) = b {
-            write!(stdout, "{}", cursor::Show);
+            write!(stdout, "{}", cursor::Show).unwrap();
             break;
         }
 
