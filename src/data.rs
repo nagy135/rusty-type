@@ -1,7 +1,8 @@
-pub fn dictionary() -> [&'static str; 3] {
+pub fn dictionary() -> [&'static str; 4] {
     [
         "ahoj",
         "viktor",
-        "slovensko"
+        "slovensko",
+        "matinka"
     ]
 }

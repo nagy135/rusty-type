@@ -16,7 +16,7 @@ use std::time::{Instant};
 
 static INIT_SPAWNING_SPEED: u128 = 1000;
 static SPAWNING_SPEED_STEP: u128 = 50;
-static SPAWNING_SPEED_MINIMUM: u128 = 100;
+static SPAWNING_SPEED_MINIMUM: u128 = 300;
 static REFRESH_RATE: u64 = 50;
 static WORD_SPACING: i16 = 2;
 
@@ -25,7 +25,8 @@ static WORD_SPACING: i16 = 2;
 struct Target<'a> {
     x: u16,
     y: u16,
-    length: u16,
+    length: usize,
+    correct: usize,
     word: &'a str
 }
 
@@ -78,7 +79,7 @@ fn main() {
                 wrong_place = false;
                 for target in targets.iter() {
                     if y == target.y {
-                        if x <= target.x + target.length &&
+                        if x <= target.x + target.length as u16 &&
                             (x as i16 + dictionary[choice].len() as i16) > (target.x as i16 - WORD_SPACING) {
                                 wrong_place = true;
                                 break;
@@ -96,7 +97,8 @@ fn main() {
                 x,
                 y,
                 word: dictionary[choice],
-                length: dictionary[choice].len() as u16
+                length: dictionary[choice].len(),
+                correct: 0
             };
             targets.push(new_target);
             write!(stdout, "{}", termion::cursor::Goto(x, y)).unwrap();
@@ -108,6 +110,27 @@ fn main() {
             write!(stdout, "{}", cursor::Show).unwrap();
             println!("{:?}", targets);
             break;
+        }
+        else if let Some(Ok(pressed_key)) = b {
+            let mut to_remove: Vec<usize> = Vec::new();
+            for (i, target) in targets.iter_mut().filter(|e| e.length > e.correct).enumerate() {
+                match target.word.chars().nth(target.correct) {
+                    Some(first_character) => {
+                        if first_character == pressed_key as char {
+                            target.correct += 1;
+                            if target.correct >= target.length {
+                                to_remove.push(i);
+                                write!(stdout, "{}", cursor::Goto(target.x, target.y)).unwrap();
+                                write!(stdout, "{}", format!("{:width$}", " ", width=12)).unwrap();
+                            }
+                        }
+                    },
+                    None => ()
+                }
+            }
+            for i in to_remove.iter() {
+                targets.remove(*i);
+            }
         }
 
         thread::sleep(Duration::from_millis(REFRESH_RATE));
