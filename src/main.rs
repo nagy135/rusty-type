@@ -2,17 +2,17 @@ extern crate termion;
 
 mod data;
 
-use termion::raw::IntoRawMode;
-use termion::terminal_size;
-use termion::async_stdin;
-use termion::cursor;
-use std::io::{Read, Write, stdout};
+use std::io::{stdout, Read, Write};
 use std::thread;
 use std::time::Duration;
+use termion::async_stdin;
+use termion::cursor;
+use termion::raw::IntoRawMode;
+use termion::terminal_size;
 
 use rand::Rng;
 
-use std::time::{Instant};
+use std::time::Instant;
 
 static INIT_SPAWNING_SPEED: u128 = 1000;
 static SPAWNING_SPEED_STEP: u128 = 50;
@@ -20,14 +20,13 @@ static SPAWNING_SPEED_MINIMUM: u128 = 300;
 static REFRESH_RATE: u64 = 50;
 static WORD_SPACING: i16 = 2;
 
-
 #[derive(Debug)]
 struct Target<'a> {
     x: u16,
     y: u16,
     length: usize,
     correct: usize,
-    word: &'a str
+    word: &'a str,
 }
 
 fn main() {
@@ -42,10 +41,7 @@ fn main() {
 
     write!(stdout, "{}", cursor::Hide).unwrap();
 
-    write!(stdout,
-           "{}",
-           termion::clear::All)
-            .unwrap();
+    write!(stdout, "{}", termion::clear::All).unwrap();
 
     let mut start = Instant::now();
     let mut termina_width: u16;
@@ -63,7 +59,7 @@ fn main() {
                 Ok(sizes) => {
                     termina_width = sizes.0 as u16;
                     termina_height = sizes.1 as u16;
-                },
+                }
                 _ => {
                     termina_width = 10;
                     termina_height = 10;
@@ -79,18 +75,19 @@ fn main() {
                 wrong_place = false;
                 for target in targets.iter() {
                     if y == target.y {
-                        if x <= target.x + target.length as u16 &&
-                            (x as i16 + dictionary[choice].len() as i16) > (target.x as i16 - WORD_SPACING) {
-                                wrong_place = true;
-                                break;
-                            }
+                        if x <= target.x + target.length as u16
+                            && (x as i16 + dictionary[choice].len() as i16)
+                                > (target.x as i16 - WORD_SPACING)
+                        {
+                            wrong_place = true;
+                            break;
+                        }
                     }
                 }
                 if wrong_place {
                     x = rng.gen_range(0, termina_width - dictionary[choice].len() as u16);
                     y = rng.gen_range(0, termina_height);
                 }
-
             }
 
             let new_target = Target {
@@ -98,7 +95,7 @@ fn main() {
                 y,
                 word: dictionary[choice],
                 length: dictionary[choice].len(),
-                correct: 0
+                correct: 0,
             };
             targets.push(new_target);
             write!(stdout, "{}", termion::cursor::Goto(x, y)).unwrap();
@@ -110,10 +107,13 @@ fn main() {
             write!(stdout, "{}", cursor::Show).unwrap();
             println!("{:?}", targets);
             break;
-        }
-        else if let Some(Ok(pressed_key)) = b {
+        } else if let Some(Ok(pressed_key)) = b {
             let mut to_remove: Vec<usize> = Vec::new();
-            for (i, target) in targets.iter_mut().filter(|e| e.length > e.correct).enumerate() {
+            for (i, target) in targets
+                .iter_mut()
+                .filter(|e| e.length > e.correct)
+                .enumerate()
+            {
                 match target.word.chars().nth(target.correct) {
                     Some(first_character) => {
                         if first_character == pressed_key as char {
@@ -121,11 +121,16 @@ fn main() {
                             if target.correct >= target.length {
                                 to_remove.push(i);
                                 write!(stdout, "{}", cursor::Goto(target.x, target.y)).unwrap();
-                                write!(stdout, "{}", format!("{:width$}", " ", width=12)).unwrap();
+                                write!(
+                                    stdout,
+                                    "{}",
+                                    format!("{:width$}", " ", width = target.length)
+                                )
+                                .unwrap();
                             }
                         }
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
             }
             for i in to_remove.iter() {
